@@ -20,6 +20,9 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Button;
+
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.RequestFuture;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -55,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Because RequestQueue sucks and I need a way to return variables.
      */
-    private String tmpString = "";
+    private static String tmpString = "";
 
     /**
      * Tag thing I have No Idea.
@@ -75,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
      * Key = Epoch Time
      * Value = "countryCode:ZIP" <- String
      */
-    private Map<Double, String> zipCodes = new HashMap<Double, String>();
+    private Map<Double, String[]> zipCodes = new HashMap<Double, String[]>();
 
     /**
      * I wonder what this could be? Definitely not the time of departure in EpochTime.
@@ -104,8 +107,16 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
 
-        final TextView textBox = findViewById(R.id.weatherOutput);
+        //final TextView textBox = findViewById(R.id.weatherOutput);
+        final TextView weather1 = (TextView)findViewById(R.id.textView1);
+        final TextView weather2 = (TextView)findViewById(R.id.textView2);
+        final TextView weather3 = (TextView)findViewById(R.id.textView3);
+        final TextView weather4 = (TextView)findViewById(R.id.textView4);
 
+        weather1.setText("Rainy");
+        weather2.setText("Sunny");
+        weather3.setText("Rainy");
+        weather4.setText("Cloudy");
 
         final Button openFile = findViewById(R.id.RefreshPage);
         openFile.setOnClickListener(new View.OnClickListener() {
@@ -128,15 +139,7 @@ public class MainActivity extends AppCompatActivity {
                 getZipCodes(startAddr, startZip, startCountry,
                                             endAddr, endZip, endCountry);
                 System.out.println(zipCodes.values());
-                /*
-                for (Object locationKey : zipCodes.keySet()) {
-                    int EpochDateTime = (int) locationKey;
-                    String[] tmpLocation = ((String) zipCodes.get(locationKey)).split(":");
-                    String locCountryCode = tmpLocation[0];
-                    String locZip = tmpLocation[1];
-                    getAPILocationCode(locCountryCode,locZip,EpochDateTime);
 
-                }*/
 
             }
         });
@@ -151,11 +154,14 @@ public class MainActivity extends AppCompatActivity {
 
         departureTime = System.currentTimeMillis()/1000;
         departureTime += 3600 - departureTime%3600;// Round Up to the nearest Hour.
+
+
+
         Log.d(TAG, "Beginning");
         getZipCodes(startAddr, startZip, startCountry,
                 endAddr, endZip, endCountry);
         Log.d(TAG, "Done");
-        Log.d(TAG,zipCodes.toString());
+        Log.d(TAG,String.valueOf(zipCodes.size()));
     }
 
     /**
@@ -168,25 +174,26 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Generate API LocationCode and forecast at the zip location and at the time.
-     * @param countryCode The country Code (US, UK, ETC)
-     * @param zip The Zip Code
+     * @param latitude Latitude value N
+     * @param longitude Longitude Value E
      * @param EpochDateTime The EpochDateTime For Forecast
      */
-    private void getAPILocationCode(final String countryCode, final String zip, final int EpochDateTime) {
+    private void getAPILocationCode(final String latitude, final String longitude, final double EpochDateTime) {
         try {
-            JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(
+            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
                     Request.Method.GET,
-                    "http://dataservice.accuweather.com/locations/v1/postalcodes/"+countryCode+"/search?apikey="+BuildConfig.AccuWeather_KEY+"&q="+zip,
+                    "http://dataservice.accuweather.com/locations/v1/cities/geoposition/search?apikey="+BuildConfig.AccuWeather_KEY+"&q="
+                            +latitude+"%2C"+longitude,
                     null,
-                    new Response.Listener<JSONArray>() {
+                    new Response.Listener<JSONObject>() {
                         @Override
-                        public void onResponse(final JSONArray response) {
+                        public void onResponse(final JSONObject response) {
                             try {
                                 Log.d(TAG, response.toString(2));
-                                String locationCode = response.getJSONObject(0).get("Key").toString();
+                                String locationCode = response.getJSONObject("Key").toString();
                                 Log.d(TAG, locationCode);
 
-                                weatherAPICall(locationCode, EpochDateTime, zip);
+                                weatherAPICall(locationCode, EpochDateTime);
 
                             } catch (JSONException ignored) { }
                         }
@@ -196,7 +203,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.e(TAG, error.toString());
                 }
             });
-            requestQueue.add(jsonArrayRequest);
+            requestQueue.add(jsonObjectRequest);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -206,9 +213,8 @@ public class MainActivity extends AppCompatActivity {
      * Get the weather forecast for a max of 12 hr period.
      * @param LocationCode The API location code.
      * @param EpochDateTime The desired time of forecast in EpochDateTime.
-     * @param zip the zip code key.
      */
-    void weatherAPICall(String LocationCode, final int EpochDateTime, final String zip) {
+    void weatherAPICall(String LocationCode, final double EpochDateTime) {
         try {
             JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(
                     Request.Method.GET,
@@ -219,11 +225,13 @@ public class MainActivity extends AppCompatActivity {
                         public void onResponse(final JSONArray hourlyForecasts) {
                             try {
                                 Log.d(TAG, hourlyForecasts.toString(2));
-
+                                Log.d(TAG, "Looking For " + String.valueOf(EpochDateTime));
                                 for (int hourlyIndex = 0; hourlyIndex<hourlyForecasts.length(); hourlyIndex++) {
                                     int time = hourlyForecasts.getJSONObject(hourlyIndex).getInt("EpochDateTime");
+                                    Log.d(TAG, "found " + String.valueOf(time));
+
                                     if (time == EpochDateTime) {
-                                        WeatherInfo.put(zip, hourlyForecasts.getJSONObject(hourlyIndex));
+                                        WeatherInfo.put(EpochDateTime, hourlyForecasts.getJSONObject(hourlyIndex));
                                         break;
                                     }
                                 }
@@ -331,17 +339,15 @@ public class MainActivity extends AppCompatActivity {
 
             JSONObject route = directions.getJSONArray("routes").getJSONObject(routeValue).getJSONArray("legs").getJSONObject(0);
             JSONArray steps = route.getJSONArray("steps");
-            zipCodes = new HashMap<Double, String>();
+            zipCodes = new HashMap<Double, String[]>();
 
             int timeAccumilator = 0; // This is in seconds
             int hour = 0;
             for (int stepIndex =0; stepIndex<steps.length(); stepIndex++) {
                 JSONObject step =  steps.getJSONObject(stepIndex);
                 long travelTime = step.getJSONObject("duration").getLong("value");
-                Log.d(TAG, String.valueOf(travelTime)+" "+String.valueOf(timeAccumilator));
                 // If Travel Time Will Cause Overflow greater then SUBDIVIDE_TRAVELTIME_THRESHOLD
                 if ((timeAccumilator + travelTime) - hour * 3600 >= 3600 + SUBDIVIDE_TRAVELTIME_THRESHOLD) {
-                    Log.d(TAG, "CASE1");
                     String polyline = step.getJSONObject("polyline").getString("points");
                     List<Double[]> detailedRoute = decodePoly(polyline);
 
@@ -357,7 +363,6 @@ public class MainActivity extends AppCompatActivity {
                         double distance = geolocationDistance(lat1,lng1,lat2,lng2,"K")*1000;
                         double subTravelTime = distance * velocity;
                         if ((timeAccumilator + subTravelTime) - hour * 3600 >= 3600 + SUBDIVIDE_TRAVELTIME_THRESHOLD) {
-                            //Log.d(TAG, "CASE1.1");
                             double drivingDistLeft = distance;
                             while (drivingDistLeft > 25) { // 25 meters is to accomadate for lost precision;
                                 double drivingTimeTillHour = 3600 - (timeAccumilator %3600);
@@ -365,28 +370,26 @@ public class MainActivity extends AppCompatActivity {
                                 double fraction = drivingTimeTillHour*velocity/drivingDistLeft;
                                 lat1 += (lat2-lat1)*fraction;
                                 lng1 += (lng2-lng1)*fraction;
-                                geolocationToLocationData(lat1, lng1);
                                 drivingDistLeft -= travelTime*velocity;
-                                Double tmpTime = new Double(departureTime + 3600 * hour);
-                                zipCodes.put(tmpTime, tmpString);
 
-                                Log.d(TAG, "Adding To ZIPS "+tmpTime.toString()+":"+tmpString);
+                                String[] latlong = {String.valueOf(lat1), String.valueOf(lng1)};
+                                Double tmpTime = new Double(departureTime + 3600 * hour);
+                                zipCodes.put(tmpTime, latlong);
+                                Log.d(TAG, "Adding To ZIPS "+tmpTime.toString()+":"+latlong);
+
                                 hour++;
                             }
                             Log.d(TAG, "Exiting LOOP");
                         // If Travel Time Will Cause Overflow
                         } else if ((timeAccumilator + subTravelTime) > hour * 3600) {
-                            //Log.d(TAG, "CASE1.2");
                             travelTime += subTravelTime;
-                            geolocationToLocationData(lat2, lng2);
-                            Log.d(TAG, tmpString);
+                            String[] latlong = {String.valueOf(lat2), String.valueOf(lng2)};
                             Double tmpTime = new Double(departureTime + 3600 * hour);
-                            zipCodes.put(tmpTime, tmpString);
-                            Log.d(TAG, "Adding To ZIPS "+tmpTime.toString()+":"+tmpString);
+                            zipCodes.put(tmpTime, latlong);
+                            Log.d(TAG, "Adding To ZIPS "+tmpTime.toString()+":"+latlong);
                             hour++;
                         // If there is no overflow, just add the time.
                         } else {
-                            //Log.d(TAG, "CASE1.3");
                             travelTime += subTravelTime;
                         }
 
@@ -396,18 +399,16 @@ public class MainActivity extends AppCompatActivity {
 
                 // If Travel Time Will Cause Overflow
                 } else if (timeAccumilator+travelTime  - hour*3600 > 0) {
-                    //Log.d(TAG, "CASE2");
                     timeAccumilator += travelTime;
-                    double lat = step.getJSONObject("end_location").getLong("lat");
-                    double lng = step.getJSONObject("end_location").getLong("lng");
-                    geolocationToLocationData(lat, lng);
+                    String lat = String.valueOf(step.getJSONObject("end_location").getLong("lat"));
+                    String lng = String.valueOf(step.getJSONObject("end_location").getLong("lng"));
+                    String[] latlong = {lat, lng};
                     Double tmpTime = new Double(departureTime + 3600 * hour);
-                    zipCodes.put(tmpTime, tmpString);
-                    Log.d(TAG, "Adding To ZIPS "+tmpTime.toString()+":"+tmpString);
+                    zipCodes.put(tmpTime, latlong);
+                    Log.d(TAG, "Adding To ZIPS "+tmpTime.toString()+":"+latlong);
                     hour++;
                 // If there is no overflow, just add the time.
                 } else {
-                    //Log.d(TAG, "CASE3");
                     timeAccumilator += travelTime;
                 }
 
@@ -425,58 +426,6 @@ public class MainActivity extends AppCompatActivity {
      * @param latitude latitude value.
      * @param longitude longitude value.
      */
-    void geolocationToLocationData(final double latitude, final double longitude) {
-        tmpString = "";
-        String url = "https://maps.googleapis.com/maps/api/geocode/json?";
-        url += "latlng="+String.valueOf(latitude)+","+String.valueOf(longitude);
-        url += "&key="+BuildConfig.Maps_KEY;
-
-        try {
-            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
-                    Request.Method.GET,
-                    ""+url,
-                    null,
-                    new Response.Listener<JSONObject>() {
-                        @Override
-                        public void onResponse(final JSONObject response) {
-                            try {
-                                JSONArray location = response.getJSONArray("results").getJSONObject(0).getJSONArray("address_components");
-
-                                String countryCodeString = "";
-                                String zipCodeString ="";
-                                for (int componentIndex = 0;  componentIndex< location.length(); componentIndex++) {
-                                    JSONArray regionTypes = location.getJSONObject(componentIndex).getJSONArray("types");
-
-                                    for (int regionTypeArrayIndex= 0; regionTypeArrayIndex<regionTypes.length(); regionTypeArrayIndex++ ) {
-                                        if (regionTypes.getString(regionTypeArrayIndex).equals("country")) {
-                                            countryCodeString = location.getJSONObject(componentIndex).getString("short_name");
-                                        }
-                                        if (regionTypes.getString(regionTypeArrayIndex).equals("postal_code")) {
-                                            zipCodeString = location.getJSONObject(componentIndex).getString("short_name");
-                                        }
-                                    }
-
-                                }
-                                tmpString = countryCodeString+" : "+zipCodeString;
-                            } catch (JSONException ignored) {
-                                Log.d(TAG, "Different Huge Error");
-                            }
-                        }
-                    }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(final VolleyError error) {
-                    Log.e(TAG, error.toString());
-                }
-            });
-            requestQueue.add(jsonObjectRequest);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        while (tmpString == "") {}
-
-        Log.d(TAG, "TMP:"+tmpString);
-
-    }
 
 
     /**
@@ -507,6 +456,18 @@ public class MainActivity extends AppCompatActivity {
                         public void onResponse(final JSONObject response) {
                              Log.d(TAG, "parsing ZipCodes");
                              decodeDirectionsToPoints(response);
+
+                             Log.d(TAG,"Found "+String.valueOf(zipCodes.size())+" Way-points");
+
+                             for (Double locationKey : zipCodes.keySet()) {
+
+                                String[] tmpLocation = zipCodes.get(locationKey);
+                                String lat = tmpLocation[0];
+                                String lng = tmpLocation[1];
+
+                                getAPILocationCode(lat,lng,locationKey.doubleValue());
+
+                             }
                         }
                     }, new Response.ErrorListener() {
                 @Override
