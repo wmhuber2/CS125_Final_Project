@@ -88,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      *  Zip Info
      */
-    private Map WeatherInfo;
+    private Map<Double, String[]> WeatherInfo;
 
     /**
      *  Amount of travel time (seconds) threshold to subdivide into smaller segments.
@@ -155,9 +155,8 @@ public class MainActivity extends AppCompatActivity {
         departureTime = System.currentTimeMillis()/1000;
         departureTime += 3600 - departureTime%3600;// Round Up to the nearest Hour.
 
-
-
         Log.d(TAG, "Beginning");
+        WeatherInfo = new HashMap<Double, String[]>();
         getZipCodes(startAddr, startZip, startCountry,
                 endAddr, endZip, endCountry);
         Log.d(TAG, "Done");
@@ -189,18 +188,19 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onResponse(final JSONObject response) {
                             try {
-                                Log.d(TAG, response.toString(2));
-                                String locationCode = response.getJSONObject("Key").toString();
-                                Log.d(TAG, locationCode);
-
+                                //Log.d(TAG, response.toString(2));
+                                String locationCode = response.getString("Key");
+                                Log.d(TAG, "LoctaionCode = "+locationCode);
                                 weatherAPICall(locationCode, EpochDateTime);
 
-                            } catch (JSONException ignored) { }
+                            } catch (JSONException ignored) {
+                                Log.d(TAG, "HUGEO BIGO JSON APILocation Code Error");
+                            }
                         }
                     }, new Response.ErrorListener() {
                 @Override
                 public void onErrorResponse(final VolleyError error) {
-                    Log.e(TAG, error.toString());
+                    Log.e(TAG, "Error getLocationCode: "+error.toString());
                 }
             });
             requestQueue.add(jsonObjectRequest);
@@ -224,18 +224,27 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onResponse(final JSONArray hourlyForecasts) {
                             try {
-                                Log.d(TAG, hourlyForecasts.toString(2));
+                                //Log.d(TAG, hourlyForecasts.toString(2));
                                 Log.d(TAG, "Looking For " + String.valueOf(EpochDateTime));
                                 for (int hourlyIndex = 0; hourlyIndex<hourlyForecasts.length(); hourlyIndex++) {
                                     int time = hourlyForecasts.getJSONObject(hourlyIndex).getInt("EpochDateTime");
                                     Log.d(TAG, "found " + String.valueOf(time));
 
                                     if (time == EpochDateTime) {
-                                        WeatherInfo.put(EpochDateTime, hourlyForecasts.getJSONObject(hourlyIndex));
+                                        Log.d(TAG, hourlyForecasts.getJSONObject(hourlyIndex).toString(2));
+                                        String IconID = String.valueOf(hourlyForecasts.getJSONObject(hourlyIndex).getInt("WeatherIcon"));
+                                        String Weather = hourlyForecasts.getJSONObject(hourlyIndex).getString("IconPhrase");
+                                        String TempUnit = hourlyForecasts.getJSONObject(hourlyIndex).getJSONObject("Temperature").getString("Unit");
+                                        String Temp = hourlyForecasts.getJSONObject(hourlyIndex).getJSONObject("Temperature").getString("Value");
+                                        String Time = String.valueOf(EpochDateTime%3600)+":"+String.valueOf(EpochDateTime%60);
+                                        String[] packagedData = {IconID, Weather, Temp+" "+TempUnit};
+                                        WeatherInfo.put(EpochDateTime, packagedData );
                                         break;
                                     }
                                 }
-                            } catch (JSONException ignored) { }
+                            } catch (JSONException ignored) {
+                                Log.d(TAG,"WeatherAPI JSON Error- Big No-No");
+                            }
                         }
                     }, new Response.ErrorListener() {
                 @Override
