@@ -1,3 +1,21 @@
 <resources>
-    <string name="app_name">CS125_FinalProject</string>
+    <string name="app_name">Weather Trip</string>
+
+    <string name="Weather0">Weather0</string>
+    <string name="Weather1">Weather1</string>
+    <string name="Weather2">Weather2</string>
+    <string name="Weather3">Weather3</string>
+    <string name="Weather4">Weather4</string>
+
+    <string name="Icon0">Icon0</string>
+    <string name="Icon1">Icon1</string>
+    <string name="Icon2">Icon2</string>
+    <string name="Icon3">Icon3</string>
+    <string name="Icon4">Icon4</string>
+
+    <string name="Temp0">Temp0</string>
+    <string name="Temp1">Temp1</string>
+    <string name="Temp2">Temp2</string>
+    <string name="Temp3">Temp3</string>
+    <string name="Temp4">Temp4</string>
 </resources>

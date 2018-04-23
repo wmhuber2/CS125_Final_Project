@@ -19,6 +19,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.ListView;
 import android.widget.Button;
 
 import com.android.volley.toolbox.JsonObjectRequest;
@@ -27,9 +28,10 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.Volley;
+
+import android.widget.EditText;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -107,18 +109,60 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
 
-        //final TextView textBox = findViewById(R.id.weatherOutput);
-        final TextView weather1 = (TextView)findViewById(R.id.textView1);
-        final TextView weather2 = (TextView)findViewById(R.id.textView2);
-        final TextView weather3 = (TextView)findViewById(R.id.textView3);
-        final TextView weather4 = (TextView)findViewById(R.id.textView4);
+        // Load the main layout for our activity
 
-        weather1.setText("Rainy");
-        weather2.setText("Sunny");
-        weather3.setText("Rainy");
-        weather4.setText("Cloudy");
+        final TextView weather0 = (TextView)findViewById(R.id.Weather0);
+        final TextView weather1 = (TextView)findViewById(R.id.Weather1);
+        final TextView weather2 = (TextView)findViewById(R.id.Weather2);
+        final TextView weather3 = (TextView)findViewById(R.id.Weather3);
+        final TextView weather4 = (TextView)findViewById(R.id.Weather4);
 
-        final Button openFile = findViewById(R.id.RefreshPage);
+        final TextView Icon0 = (TextView)findViewById(R.id.Icon0);
+        final TextView Icon1 = (TextView)findViewById(R.id.Icon1);
+        final TextView Icon2 = (TextView)findViewById(R.id.Icon2);
+        final TextView Icon3 = (TextView)findViewById(R.id.Icon3);
+        final TextView Icon4 = (TextView)findViewById(R.id.Icon4);
+
+        final TextView Temp0 = (TextView)findViewById(R.id.Temp0);
+        final TextView Temp1 = (TextView)findViewById(R.id.Temp1);
+        final TextView Temp2 = (TextView)findViewById(R.id.Temp2);
+        final TextView Temp3 = (TextView)findViewById(R.id.Temp3);
+        final TextView Temp4 = (TextView)findViewById(R.id.Temp4);
+
+        final EditText startAddressText = findViewById(R.id.StartAddress);
+        final EditText endAddressText = findViewById(R.id.EndAddress);
+        final String startAddress = startAddressText.getText().toString();
+        final String endAddress = endAddressText.getText().toString();
+
+
+        weather0.setText("Weather Right Now");
+        weather1.setText("Weather in 1 Hour");
+        weather2.setText("Weather in 2 Hours");
+        weather3.setText("Weather in 3 Hours");
+        weather4.setText("Weather in 4 Hours");
+
+        Icon0.setText("Sunny");
+        Icon1.setText("Rainy");
+        Icon2.setText("Cloudy");
+        Icon3.setText("Snowy");
+        Icon4.setText("Sucky");
+
+        Temp0.setText("75");
+        Temp1.setText("60");
+        Temp2.setText("88");
+        Temp3.setText("32");
+        Temp4.setText("-25");
+
+
+
+
+
+        //==========================================
+
+
+        //menu.add(Menu.NONE, MENU_ITEM_ITEM1, Menu.NONE, "Item name");
+
+        final Button openFile = findViewById(R.id.button);
         openFile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View v) {
@@ -136,31 +180,16 @@ public class MainActivity extends AppCompatActivity {
                 departureTime = System.currentTimeMillis()/1000;
                 departureTime += 3600 - departureTime%3600;// Round Up to the nearest Hour.
                 Log.d(TAG, "Beginning");
+                WeatherInfo = new HashMap<Double, String[]>();
+
                 getZipCodes(startAddr, startZip, startCountry,
                                             endAddr, endZip, endCountry);
                 System.out.println(zipCodes.values());
-
+                Log.d(TAG, "Done");
+                Log.d(TAG,String.valueOf(zipCodes.size()));
 
             }
         });
-        Log.d(TAG, "Refreshing Web Page Data");
-        String startAddr    = "201 N Goodwin Ave";
-        String startZip     = "61801";
-        String startCountry = "US";
-
-        String endAddr    = "233 S Wacker Dr";
-        String endZip     = "60606";
-        String endCountry = "US";
-
-        departureTime = System.currentTimeMillis()/1000;
-        departureTime += 3600 - departureTime%3600;// Round Up to the nearest Hour.
-
-        Log.d(TAG, "Beginning");
-        WeatherInfo = new HashMap<Double, String[]>();
-        getZipCodes(startAddr, startZip, startCountry,
-                endAddr, endZip, endCountry);
-        Log.d(TAG, "Done");
-        Log.d(TAG,String.valueOf(zipCodes.size()));
     }
 
     /**

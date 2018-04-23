@@ -1,71 +1,187 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".MainActivity"
+    android:orientation="vertical" android:layout_width="fill_parent"
+    android:layout_height="fill_parent" android:weightSum="100">
 
-    <LinearLayout
+
+    <EditText
+        android:id="@+id/StartAddress"
+        android:layout_width="match_parent"
+        android:layout_height="180dp"
+        android:layout_weight="50"
+        android:ems="10"
+        android:inputType="textPostalAddress"
+        android:text="Starting Address" />
+
+    <Space
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:layout_marginRight="8dp"
-        android:orientation="vertical"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:layout_weight="50" />
+
+    <EditText
+        android:id="@+id/EndAddress"
+        android:layout_width="match_parent"
+        android:layout_height="58dp"
+        android:layout_weight="50"
+        android:ems="10"
+        android:inputType="textPostalAddress"
+        android:text="Destination Address" />
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_weight="50"
+        android:orientation="vertical">
 
         <Button
-            android:id="@+id/RefreshPage"
+            android:id="@+id/button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Update" />
+            android:text="Route" />
 
-        <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-            android:id="@+id/ScrollView"
-            style="@android:style/Widget.DeviceDefault.Light.ScrollView"
+        <Space
             android:layout_width="match_parent"
-            android:layout_height="fill_parent"
-            android:baselineAligned="false"
-            android:scrollbarStyle="insideOverlay"
-            android:scrollbars="horizontal"
-            android:visibility="visible">
+            android:layout_height="34dp" />
 
-            <LinearLayout
-                android:id="@+id/linearLayout1"
+        <TableLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TableRow
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical|center_horizontal"
-                android:orientation="vertical">
+                android:layout_height="match_parent" >
 
                 <TextView
-                    android:id="@+id/textView1"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="TextView" />
+                    android:id="@+id/Weather0"
+                    android:layout_width="182dp"
+                    android:layout_height="60dp"
+                    android:text="@string/Weather0"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
 
                 <TextView
-                    android:id="@+id/textView4"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="TextView" />
+                    android:id="@+id/Icon0"
+                    android:layout_width="174dp"
+                    android:layout_height="60dp"
+                    android:text="@string/Icon0"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
 
                 <TextView
-                    android:id="@+id/textView3"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="TextView" />
+                    android:id="@+id/Temp0"
+                    android:layout_width="85dp"
+                    android:layout_height="60dp"
+                    android:text="@string/Temp0"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" >
 
                 <TextView
-                    android:id="@+id/textView2"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="TextView" />
-            </LinearLayout>
+                    android:id="@+id/Weather1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="60dp"
+                    android:text="@string/Weather1"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
 
-        </ScrollView>
+                <TextView
+                    android:id="@+id/Icon1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="60dp"
+                    android:text="@string/Icon1"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
 
+                <TextView
+                    android:id="@+id/Temp1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="60dp"
+                    android:text="@string/Temp1"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" >
+
+                <TextView
+                    android:id="@+id/Weather2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="60dp"
+                    android:text="@string/Weather2"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+
+                <TextView
+                    android:id="@+id/Icon2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="60dp"
+                    android:text="@string/Icon2"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+
+                <TextView
+                    android:id="@+id/Temp2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="60dp"
+                    android:text="@string/Temp2"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" >
+
+                <TextView
+                    android:id="@+id/Weather3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="60dp"
+                    android:text="@string/Weather3"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+
+                <TextView
+                    android:id="@+id/Icon3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:text="@string/Icon3"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+
+                <TextView
+                    android:id="@+id/Temp3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:text="@string/Temp3"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" >
+
+                <TextView
+                    android:id="@+id/Weather4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="60dp"
+                    android:text="@string/Weather4"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+
+                <TextView
+                    android:id="@+id/Icon4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="60dp"
+                    android:text="@string/Icon4"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+
+                <TextView
+                    android:id="@+id/Temp4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="60dp"
+                    android:text="@string/Temp4"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+            </TableRow>
+        </TableLayout>
 
     </LinearLayout>
-
-</android.support.constraint.ConstraintLayout>
+</LinearLayout>
