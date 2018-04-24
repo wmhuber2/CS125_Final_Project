@@ -5,7 +5,7 @@ import android.os.Bundle;
 import java.lang.Double;
 import java.util.List;
 import java.util.ArrayList;
-
+import java.util.Collections;
 import com.android.volley.NetworkResponse;
 import com.android.volley.ParseError;
 import com.android.volley.Response;
@@ -97,6 +97,19 @@ public class MainActivity extends AppCompatActivity {
      */
     private static int SUBDIVIDE_TRAVELTIME_THRESHOLD = 60*10;
     /**
+     * the page user is on.
+     */
+    private int page = 0;
+
+    private int completedSearches =0;
+    private int maxWaypoints = 24;
+
+    private int numberDisplays = 5;
+    private List<TextView> weatherDisplays = new ArrayList<>();
+    private List<TextView> iconDisplays = new ArrayList<>();
+    private List<TextView> tempDisplays = new ArrayList<>();
+
+    /**
      * Run when this activity comes to the foreground.
      *
      * @param savedInstanceState unused
@@ -111,56 +124,90 @@ public class MainActivity extends AppCompatActivity {
 
         // Load the main layout for our activity
 
-        final TextView weather0 = (TextView)findViewById(R.id.Weather0);
-        final TextView weather1 = (TextView)findViewById(R.id.Weather1);
-        final TextView weather2 = (TextView)findViewById(R.id.Weather2);
-        final TextView weather3 = (TextView)findViewById(R.id.Weather3);
-        final TextView weather4 = (TextView)findViewById(R.id.Weather4);
 
-        final TextView Icon0 = (TextView)findViewById(R.id.Icon0);
-        final TextView Icon1 = (TextView)findViewById(R.id.Icon1);
-        final TextView Icon2 = (TextView)findViewById(R.id.Icon2);
-        final TextView Icon3 = (TextView)findViewById(R.id.Icon3);
-        final TextView Icon4 = (TextView)findViewById(R.id.Icon4);
+        weatherDisplays.add( (TextView)findViewById(R.id.Weather0) );
+        weatherDisplays.add( (TextView)findViewById(R.id.Weather1) );
+        weatherDisplays.add( (TextView)findViewById(R.id.Weather2) );
+        weatherDisplays.add( (TextView)findViewById(R.id.Weather3) );
+        weatherDisplays.add( (TextView)findViewById(R.id.Weather4) );
 
-        final TextView Temp0 = (TextView)findViewById(R.id.Temp0);
-        final TextView Temp1 = (TextView)findViewById(R.id.Temp1);
-        final TextView Temp2 = (TextView)findViewById(R.id.Temp2);
-        final TextView Temp3 = (TextView)findViewById(R.id.Temp3);
-        final TextView Temp4 = (TextView)findViewById(R.id.Temp4);
+        iconDisplays.add( (TextView)findViewById(R.id.Icon0) );
+        iconDisplays.add( (TextView)findViewById(R.id.Icon1) );
+        iconDisplays.add( (TextView)findViewById(R.id.Icon2) );
+        iconDisplays.add( (TextView)findViewById(R.id.Icon3) );
+        iconDisplays.add( (TextView)findViewById(R.id.Icon4) );
+
+        tempDisplays.add( (TextView)findViewById(R.id.Temp0) );
+        tempDisplays.add( (TextView)findViewById(R.id.Temp1) );
+        tempDisplays.add( (TextView)findViewById(R.id.Temp2) );
+        tempDisplays.add( (TextView)findViewById(R.id.Temp3) );
+        tempDisplays.add( (TextView)findViewById(R.id.Temp4) );
 
         final EditText startAddressText = findViewById(R.id.StartAddress);
         final EditText endAddressText = findViewById(R.id.EndAddress);
-        final String startAddress = startAddressText.getText().toString();
-        final String endAddress = endAddressText.getText().toString();
-
-
-        weather0.setText("Weather Right Now");
-        weather1.setText("Weather in 1 Hour");
-        weather2.setText("Weather in 2 Hours");
-        weather3.setText("Weather in 3 Hours");
-        weather4.setText("Weather in 4 Hours");
-
-        Icon0.setText("Sunny");
-        Icon1.setText("Rainy");
-        Icon2.setText("Cloudy");
-        Icon3.setText("Snowy");
-        Icon4.setText("Sucky");
-
-        Temp0.setText("75");
-        Temp1.setText("60");
-        Temp2.setText("88");
-        Temp3.setText("32");
-        Temp4.setText("-25");
-
-
-
-
+        final EditText startZipText = findViewById(R.id.startZip);
+        final EditText endZipText = findViewById(R.id.endZip);
 
         //==========================================
 
 
         //menu.add(Menu.NONE, MENU_ITEM_ITEM1, Menu.NONE, "Item name");
+
+        final Button nextPageBtn = findViewById(R.id.nextButton);
+        nextPageBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(final View v) {
+                if (page < completedSearches / 5) {
+                    page++;
+                }
+                Log.d(TAG, WeatherInfo.toString());
+                List<Double> timeKeys = new ArrayList<Double>();
+                timeKeys.addAll(zipCodes.keySet());
+
+                Collections.sort(timeKeys);
+
+
+                for (int display = 0; display < numberDisplays; display++) {
+                    if (display + 5 * page < completedSearches) {
+                        weatherDisplays.get(display).setText("Weather at " + String.valueOf(page + display) + " Hour");
+                        iconDisplays.get(display).setText(WeatherInfo.get(timeKeys.get(page + display))[1]);
+                        tempDisplays.get(display).setText(WeatherInfo.get(timeKeys.get(page + display))[2]);
+                    } else {
+                        weatherDisplays.get(display).setText("");
+                        iconDisplays.get(display).setText("");
+                        tempDisplays.get(display).setText("");
+                    }
+                }
+            }
+        });
+        final Button prevPageBtn = findViewById(R.id.prevButton);
+        prevPageBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(final View v) {
+                if (page > 0) {
+                    page--;
+                }
+                Log.d(TAG, WeatherInfo.toString());
+                List<Double> timeKeys = new ArrayList<Double>();
+                timeKeys.addAll(zipCodes.keySet());
+
+                Collections.sort(timeKeys);
+
+
+                for (int display = 0; display < numberDisplays; display++) {
+                    if (display + 5 * page < completedSearches) {
+                        weatherDisplays.get(display).setText("Weather at " + String.valueOf(page + display) + " Hour");
+                        iconDisplays.get(display).setText(WeatherInfo.get(timeKeys.get(page + display))[1]);
+                        tempDisplays.get(display).setText(WeatherInfo.get(timeKeys.get(page + display))[2]);
+                    } else {
+                        weatherDisplays.get(display).setText("");
+                        iconDisplays.get(display).setText("");
+                        tempDisplays.get(display).setText("");
+                    }
+                }
+
+            }
+        });
 
         final Button openFile = findViewById(R.id.button);
         openFile.setOnClickListener(new View.OnClickListener() {
@@ -168,26 +215,33 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(final View v) {
                 Log.d(TAG, "Refreshing Web Page Data");
 
-
-                String startAddr    = "201 N Goodwin Ave";
-                String startZip     = "61801";
+                String startAddr = startAddressText.getText().toString();
+                String startZip = startZipText.getText().toString();
                 String startCountry = "US";
 
-                String endAddr    = "233 S Wacker Dr";
-                String endZip     = "60606";
+
+                String endAddr = endAddressText.getText().toString();
+                String endZip = endZipText.getText().toString();
                 String endCountry = "US";
 
+                if (startAddr.equals("Starting Address") && endAddr.equals("Destination Address")) {
+                    Log.d(TAG, "Using Shortcut Input Cuz, We Lazy Testers");
+
+                    startAddr    = "201 N Goodwin Ave";
+                    startZip     = "61801";
+
+                    endAddr    = "233 S Wacker Dr";
+                    endZip     = "60606";
+                }
+
+
+                page = 0;
                 departureTime = System.currentTimeMillis()/1000;
                 departureTime += 3600 - departureTime%3600;// Round Up to the nearest Hour.
-                Log.d(TAG, "Beginning");
+
                 WeatherInfo = new HashMap<Double, String[]>();
-
-                getZipCodes(startAddr, startZip, startCountry,
-                                            endAddr, endZip, endCountry);
-                System.out.println(zipCodes.values());
-                Log.d(TAG, "Done");
+                getZipCodes(startAddr, startZip, startCountry, endAddr, endZip, endCountry);
                 Log.d(TAG,String.valueOf(zipCodes.size()));
-
             }
         });
     }
@@ -268,6 +322,27 @@ public class MainActivity extends AppCompatActivity {
                                         String Time = String.valueOf(EpochDateTime%3600)+":"+String.valueOf(EpochDateTime%60);
                                         String[] packagedData = {IconID, Weather, Temp+" "+TempUnit};
                                         WeatherInfo.put(EpochDateTime, packagedData );
+                                        completedSearches++;
+                                        if (completedSearches == zipCodes.size()) {
+                                            Log.d(TAG, WeatherInfo.toString());
+                                            List<Double> timeKeys = new ArrayList<Double>();
+                                            timeKeys.addAll(zipCodes.keySet());
+
+                                            Collections.sort(timeKeys);
+
+
+                                            for (int display = 0; display < numberDisplays; display++) {
+                                                if (display + 5 * page < completedSearches) {
+                                                    weatherDisplays.get(display).setText("Weather at " + String.valueOf(page + display) + " Hour");
+                                                    iconDisplays.get(display).setText(WeatherInfo.get(timeKeys.get(page + display))[1]);
+                                                    tempDisplays.get(display).setText(WeatherInfo.get(timeKeys.get(page + display))[2]);
+                                                } else {
+                                                    weatherDisplays.get(display).setText("");
+                                                    iconDisplays.get(display).setText("");
+                                                    tempDisplays.get(display).setText("");
+                                                }
+                                            }
+                                        }
                                         break;
                                     }
                                 }
@@ -497,14 +572,19 @@ public class MainActivity extends AppCompatActivity {
 
                              Log.d(TAG,"Found "+String.valueOf(zipCodes.size())+" Way-points");
 
-                             for (Double locationKey : zipCodes.keySet()) {
+                             completedSearches =0;
+                             if (zipCodes.size() <= maxWaypoints) {
+                                 for (Double locationKey : zipCodes.keySet()) {
 
-                                String[] tmpLocation = zipCodes.get(locationKey);
-                                String lat = tmpLocation[0];
-                                String lng = tmpLocation[1];
+                                     String[] tmpLocation = zipCodes.get(locationKey);
+                                     String lat = tmpLocation[0];
+                                     String lng = tmpLocation[1];
 
-                                getAPILocationCode(lat,lng,locationKey.doubleValue());
+                                     getAPILocationCode(lat, lng, locationKey.doubleValue());
 
+                                 }
+                             } else {
+                                 Log.d(TAG, "Too many Waypoints. You F*** Up Done Gud.");
                              }
                         }
                     }, new Response.ErrorListener() {
