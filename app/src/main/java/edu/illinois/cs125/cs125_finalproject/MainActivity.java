@@ -57,6 +57,7 @@ import org.json.JSONException;
 
 
 public class MainActivity extends AppCompatActivity {
+    private boolean disableWeatherDebug = false;
     /**
      * Because RequestQueue sucks and I need a way to return variables.
      */
@@ -230,8 +231,11 @@ public class MainActivity extends AppCompatActivity {
                     startAddr    = "201 N Goodwin Ave";
                     startZip     = "61801";
 
-                    endAddr    = "233 S Wacker Dr";
-                    endZip     = "60606";
+                    //endAddr    = "233 S Wacker Dr";
+                    //endZip     = "60606";
+
+                    endAddr    = "8 Melia Way";
+                    endZip     = "11746";
                 }
 
 
@@ -273,7 +277,7 @@ public class MainActivity extends AppCompatActivity {
                             try {
                                 //Log.d(TAG, response.toString(2));
                                 String locationCode = response.getString("Key");
-                                Log.d(TAG, "LoctaionCode = "+locationCode);
+                                //Log.d(TAG, "LoctaionCode = "+locationCode);
                                 weatherAPICall(locationCode, EpochDateTime);
 
                             } catch (JSONException ignored) {
@@ -308,13 +312,13 @@ public class MainActivity extends AppCompatActivity {
                         public void onResponse(final JSONArray hourlyForecasts) {
                             try {
                                 //Log.d(TAG, hourlyForecasts.toString(2));
-                                Log.d(TAG, "Looking For " + String.valueOf(EpochDateTime));
+                                //Log.d(TAG, "Looking For " + String.valueOf(EpochDateTime));
                                 for (int hourlyIndex = 0; hourlyIndex<hourlyForecasts.length(); hourlyIndex++) {
                                     int time = hourlyForecasts.getJSONObject(hourlyIndex).getInt("EpochDateTime");
-                                    Log.d(TAG, "found " + String.valueOf(time));
+                                    //Log.d(TAG, "found " + String.valueOf(time));
 
                                     if (time == EpochDateTime) {
-                                        Log.d(TAG, hourlyForecasts.getJSONObject(hourlyIndex).toString(2));
+                                        //Log.d(TAG, hourlyForecasts.getJSONObject(hourlyIndex).toString(2));
                                         String IconID = String.valueOf(hourlyForecasts.getJSONObject(hourlyIndex).getInt("WeatherIcon"));
                                         String Weather = hourlyForecasts.getJSONObject(hourlyIndex).getString("IconPhrase");
                                         String TempUnit = hourlyForecasts.getJSONObject(hourlyIndex).getJSONObject("Temperature").getString("Unit");
@@ -332,10 +336,10 @@ public class MainActivity extends AppCompatActivity {
 
 
                                             for (int display = 0; display < numberDisplays; display++) {
-                                                if (display + 5 * page < completedSearches) {
-                                                    weatherDisplays.get(display).setText("Weather at " + String.valueOf(page + display) + " Hour");
-                                                    iconDisplays.get(display).setText(WeatherInfo.get(timeKeys.get(page + display))[1]);
-                                                    tempDisplays.get(display).setText(WeatherInfo.get(timeKeys.get(page + display))[2]);
+                                                if (display + numberDisplays * page < completedSearches) {
+                                                    weatherDisplays.get(display).setText("Weather at " + String.valueOf(page*numberDisplays + display) + " Hour");
+                                                    iconDisplays.get(display).setText(WeatherInfo.get(timeKeys.get(page*numberDisplays + display))[1]);
+                                                    tempDisplays.get(display).setText(WeatherInfo.get(timeKeys.get(page*numberDisplays + display))[2]);
                                                 } else {
                                                     weatherDisplays.get(display).setText("");
                                                     iconDisplays.get(display).setText("");
@@ -343,7 +347,7 @@ public class MainActivity extends AppCompatActivity {
                                                 }
                                             }
                                         }
-                                        break;
+
                                     }
                                 }
                             } catch (JSONException ignored) {
@@ -396,9 +400,9 @@ public class MainActivity extends AppCompatActivity {
 
             Double geoPoint[]= new Double[2];
 
-            geoPoint[0] = (((double) lat / 1E5) * 1E6);
-            geoPoint[1] = (((double) lng / 1E5) * 1E6);
-            Log.d(TAG, "Waypoint: Lat:"+ geoPoint[0].toString() +"   Long:"+geoPoint[1].toString());
+            geoPoint[0] = (((double) lat / 1E5) );
+            geoPoint[1] = (((double) lng / 1E5) );
+            //Log.d(TAG, "Waypoint: Lat:"+ geoPoint[0].toString() +"   Long:"+geoPoint[1].toString());
             geoPoints.add(geoPoint);
         }
 
@@ -407,42 +411,33 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Source https://www.geodatasource.com/developers/java
-     * @param lat1
-     * @param lon1
-     * @param lat2
-     * @param lon2
-     * @param unit
+     * https://stackoverflow.com/questions/36655207/why-calculating-distance-between-two-lat-long-gives-wrong-result
+     * @param lat1 The latitude of point 1.
+     * @param lon1 The longitude of point 1.
+     * @param lat2 The latitude of point 2.
+     * @param lon2 The longitude of point 2.
      * @return
      */
-    private double geolocationDistance(double lat1, double lon1, double lat2, double lon2, String unit) {
-        double theta = lon1 - lon2;
-        double dist = Math.sin(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(deg2rad(theta));
-        dist = Math.acos(dist);
-        dist = rad2deg(dist);
-        dist = dist * 60 * 1.1515;
-        if (unit == "K") {
-            dist = dist * 1.609344;
-        } else if (unit == "N") {
-            dist = dist * 0.8684;
-        }
+    private double geolocationDistance(double lat1, double lon1, double lat2, double lon2) {
+        double R = 6371.0; // km
+        double dLat = (lat2-lat1)*Math.PI/180.0;
+        double dLon = (lon2-lon1)*Math.PI/180.0;
+        lat1 = lat1*Math.PI/180.0;
+        lat2 = lat2*Math.PI/180.0;
 
-        return (dist);
-    }
-    /*:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/
-    /*::	This function converts decimal degrees to radians						 :*/
-    /*:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/
-    private static double deg2rad(double deg) {
-        return (deg * Math.PI / 180.0);
+        double a = Math.sin(dLat/2.0) * Math.sin(dLat/2.0) +
+                Math.sin(dLon/2.0) * Math.sin(dLon/2.0) * Math.cos(lat1) * Math.cos(lat2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        double d = R * c;
+
+        return d*1000;
     }
 
-    /*:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/
-    /*::	This function converts radians to decimal degrees						 :*/
-    /*:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*/
-    private static double rad2deg(double rad) {
-        return (rad * 180 / Math.PI);
-    }
     /**
      * Takes The Web API Directions and decodes them while extrapolationg points with about 1 hr intervals.
+     * break up Steps
+     * Break Up Polyline
+     * breakUp line
      * @param directions JSON object from web.
      */
     private void decodeDirectionsToPoints(final JSONObject directions) {
@@ -456,77 +451,84 @@ public class MainActivity extends AppCompatActivity {
 
             int timeAccumilator = 0; // This is in seconds
             int hour = 0;
+
+            // For Each Step
             for (int stepIndex =0; stepIndex<steps.length(); stepIndex++) {
                 JSONObject step =  steps.getJSONObject(stepIndex);
-                long travelTime = step.getJSONObject("duration").getLong("value");
-                // If Travel Time Will Cause Overflow greater then SUBDIVIDE_TRAVELTIME_THRESHOLD
-                if ((timeAccumilator + travelTime) - hour * 3600 >= 3600 + SUBDIVIDE_TRAVELTIME_THRESHOLD) {
-                    String polyline = step.getJSONObject("polyline").getString("points");
-                    List<Double[]> detailedRoute = decodePoly(polyline);
+                long stepTravelTime = step.getJSONObject("duration").getLong("value");
+                //Log.d(TAG, "Step Travel Time: "+String.valueOf(stepTravelTime)+" Adding to Total of "+String.valueOf(timeAccumilator));
 
-                    // meters per second
-                    long velocity = step.getJSONObject("distance").getInt("value")/travelTime;
+                if ((timeAccumilator + stepTravelTime) - (hour * 3600) >= 3600 + SUBDIVIDE_TRAVELTIME_THRESHOLD) {
 
-                    for (int locationIndex = 0; locationIndex< detailedRoute.size()-1; locationIndex++) {
-                        double lat1 = detailedRoute.get(locationIndex)[0];
-                        double lng1 = detailedRoute.get(locationIndex)[1];
-                        double lat2 = detailedRoute.get(locationIndex+1)[0];
-                        double lng2 = detailedRoute.get(locationIndex+1)[1];
+                    //System.out.println( "Need to Break Step At...");
+                    //System.out.println("Step Travel Time: "+String.valueOf(stepTravelTime)+" Adding to Total of "+String.valueOf(timeAccumilator));
 
-                        double distance = geolocationDistance(lat1,lng1,lat2,lng2,"K")*1000;
-                        double subTravelTime = distance * velocity;
+                    List<Double[]> polylineRoute = decodePoly(step.getJSONObject("polyline").getString("points"));
+                    double distance = step.getJSONObject("distance").getDouble("value");
+                    double velocity = distance/stepTravelTime;
+                    System.out.println("\tVelocity "+String.valueOf(velocity)+" Dist: "+String.valueOf(distance));
+
+                    // For each line in the polyline
+                    for (int locationIndex = 0; locationIndex< polylineRoute.size()-1; locationIndex++) {
+                        double lat1 = polylineRoute.get(locationIndex)[0];
+                        double lng1 = polylineRoute.get(locationIndex)[1];
+                        double lat2 = polylineRoute.get(locationIndex+1)[0];
+                        double lng2 = polylineRoute.get(locationIndex+1)[1];
+
+                        double linedistance = geolocationDistance(lat1,lng1,lat2,lng2);
+                        double subTravelTime = linedistance / velocity;
+                        //System.out.println( "\t\tBreaking Up Poly, Line Travel Time "+String.valueOf(subTravelTime));
+
                         if ((timeAccumilator + subTravelTime) - hour * 3600 >= 3600 + SUBDIVIDE_TRAVELTIME_THRESHOLD) {
-                            double drivingDistLeft = distance;
-                            while (drivingDistLeft > 25) { // 25 meters is to accomadate for lost precision;
+                            for (int subHour = 0; subHour < subTravelTime/3600; subHour++) { // 25 meters is to accomadate for lost precision;
                                 double drivingTimeTillHour = 3600 - (timeAccumilator %3600);
-                                travelTime += drivingTimeTillHour;
-                                double fraction = drivingTimeTillHour*velocity/drivingDistLeft;
+                                Log.d(TAG, "\t\tBreaking Up Poly Line Ind. TargetSubSub Travel Time: "+String.valueOf(drivingTimeTillHour));
+
+                                timeAccumilator += drivingTimeTillHour;
+                                double fraction = drivingTimeTillHour/subTravelTime;
                                 lat1 += (lat2-lat1)*fraction;
                                 lng1 += (lng2-lng1)*fraction;
-                                drivingDistLeft -= travelTime*velocity;
+                                subTravelTime -= drivingTimeTillHour;
+
 
                                 String[] latlong = {String.valueOf(lat1), String.valueOf(lng1)};
                                 Double tmpTime = new Double(departureTime + 3600 * hour);
                                 zipCodes.put(tmpTime, latlong);
-                                Log.d(TAG, "Adding To ZIPS "+tmpTime.toString()+":"+latlong);
-
                                 hour++;
                             }
-                            Log.d(TAG, "Exiting LOOP");
-                        // If Travel Time Will Cause Overflow
+
                         } else if ((timeAccumilator + subTravelTime) > hour * 3600) {
-                            travelTime += subTravelTime;
+                            timeAccumilator += subTravelTime;
                             String[] latlong = {String.valueOf(lat2), String.valueOf(lng2)};
                             Double tmpTime = new Double(departureTime + 3600 * hour);
                             zipCodes.put(tmpTime, latlong);
-                            Log.d(TAG, "Adding To ZIPS "+tmpTime.toString()+":"+latlong);
                             hour++;
-                        // If there is no overflow, just add the time.
                         } else {
-                            travelTime += subTravelTime;
+                            timeAccumilator += subTravelTime;
                         }
-
-
                     }
 
-
-                // If Travel Time Will Cause Overflow
-                } else if (timeAccumilator+travelTime  - hour*3600 > 0) {
-                    timeAccumilator += travelTime;
+                } else if (timeAccumilator+stepTravelTime  - hour*3600 > 0) {
+                    timeAccumilator += stepTravelTime;
                     String lat = String.valueOf(step.getJSONObject("end_location").getLong("lat"));
                     String lng = String.valueOf(step.getJSONObject("end_location").getLong("lng"));
                     String[] latlong = {lat, lng};
                     Double tmpTime = new Double(departureTime + 3600 * hour);
                     zipCodes.put(tmpTime, latlong);
-                    Log.d(TAG, "Adding To ZIPS "+tmpTime.toString()+":"+latlong);
                     hour++;
-                // If there is no overflow, just add the time.
                 } else {
-                    timeAccumilator += travelTime;
+                    timeAccumilator += stepTravelTime;
                 }
 
 
             }
+            hour++;
+            JSONObject step =  steps.getJSONObject( steps.length()-1 );
+            String lat = String.valueOf(step.getJSONObject("end_location").getLong("lat"));
+            String lng = String.valueOf(step.getJSONObject("end_location").getLong("lng"));
+            String[] latlong = {lat, lng};
+            Double tmpTime = new Double(departureTime + 3600 * hour);
+            zipCodes.put(tmpTime, latlong);
         } catch (JSONException ignored) {
             Log.d(TAG, "HUGE EXCEPTION");
 
@@ -570,9 +572,12 @@ public class MainActivity extends AppCompatActivity {
                              Log.d(TAG, "parsing ZipCodes");
                              decodeDirectionsToPoints(response);
 
-                             Log.d(TAG,"Found "+String.valueOf(zipCodes.size())+" Way-points");
+                             Log.d(TAG,"Found "+String.valueOf(zipCodes.size())+" Way-points.");
 
                              completedSearches =0;
+                             if (disableWeatherDebug) {
+                                 return;
+                             }
                              if (zipCodes.size() <= maxWaypoints) {
                                  for (Double locationKey : zipCodes.keySet()) {
 
