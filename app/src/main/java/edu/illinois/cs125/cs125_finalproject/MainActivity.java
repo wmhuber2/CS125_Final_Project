@@ -170,9 +170,9 @@ public class MainActivity extends AppCompatActivity {
 
                 for (int display = 0; display < numberDisplays; display++) {
                     if (display + 5 * page < completedSearches) {
-                        weatherDisplays.get(display).setText("Weather at " + String.valueOf(page + display) + " Hour");
-                        iconDisplays.get(display).setText(WeatherInfo.get(timeKeys.get(page + display))[1]);
-                        tempDisplays.get(display).setText(WeatherInfo.get(timeKeys.get(page + display))[2]);
+                        weatherDisplays.get(display).setText("Weather at " + String.valueOf((page*numberDisplays) + display) + " Hour");
+                        iconDisplays.get(display).setText(WeatherInfo.get(timeKeys.get((page*numberDisplays) + display))[1]);
+                        tempDisplays.get(display).setText(WeatherInfo.get(timeKeys.get((page*numberDisplays) + display))[2]);
                     } else {
                         weatherDisplays.get(display).setText("");
                         iconDisplays.get(display).setText("");
@@ -197,9 +197,9 @@ public class MainActivity extends AppCompatActivity {
 
                 for (int display = 0; display < numberDisplays; display++) {
                     if (display + 5 * page < completedSearches) {
-                        weatherDisplays.get(display).setText("Weather at " + String.valueOf(page + display) + " Hour");
-                        iconDisplays.get(display).setText(WeatherInfo.get(timeKeys.get(page + display))[1]);
-                        tempDisplays.get(display).setText(WeatherInfo.get(timeKeys.get(page + display))[2]);
+                        weatherDisplays.get(display).setText("Weather at " + String.valueOf((page*numberDisplays) + display) + " Hour");
+                        iconDisplays.get(display).setText(WeatherInfo.get(timeKeys.get((page*numberDisplays) + display))[1]);
+                        tempDisplays.get(display).setText(WeatherInfo.get(timeKeys.get((page*numberDisplays) + display))[2]);
                     } else {
                         weatherDisplays.get(display).setText("");
                         iconDisplays.get(display).setText("");
@@ -266,6 +266,8 @@ public class MainActivity extends AppCompatActivity {
      */
     private void getAPILocationCode(final String latitude, final String longitude, final double EpochDateTime) {
         try {
+            Log.d(TAG,"http://dataservice.accuweather.com/locations/v1/cities/geoposition/search?apikey="+BuildConfig.AccuWeather_KEY+"&q="
+                    +latitude+"%2C"+longitude);
             JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
                     Request.Method.GET,
                     "http://dataservice.accuweather.com/locations/v1/cities/geoposition/search?apikey="+BuildConfig.AccuWeather_KEY+"&q="
@@ -275,9 +277,10 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onResponse(final JSONObject response) {
                             try {
+
                                 //Log.d(TAG, response.toString(2));
                                 String locationCode = response.getString("Key");
-                                //Log.d(TAG, "LoctaionCode = "+locationCode);
+                                Log.d(TAG, "LoctaionCode = "+locationCode);
                                 weatherAPICall(locationCode, EpochDateTime);
 
                             } catch (JSONException ignored) {
@@ -327,7 +330,7 @@ public class MainActivity extends AppCompatActivity {
                                         String[] packagedData = {IconID, Weather, Temp+" "+TempUnit};
                                         WeatherInfo.put(EpochDateTime, packagedData );
                                         completedSearches++;
-                                        if (completedSearches == zipCodes.size()) {
+                                        if (completedSearches == zipCodes.size() - 1) {
                                             Log.d(TAG, WeatherInfo.toString());
                                             List<Double> timeKeys = new ArrayList<Double>();
                                             timeKeys.addAll(zipCodes.keySet());
@@ -337,9 +340,9 @@ public class MainActivity extends AppCompatActivity {
 
                                             for (int display = 0; display < numberDisplays; display++) {
                                                 if (display + numberDisplays * page < completedSearches) {
-                                                    weatherDisplays.get(display).setText("Weather at " + String.valueOf(page*numberDisplays + display) + " Hour");
-                                                    iconDisplays.get(display).setText(WeatherInfo.get(timeKeys.get(page*numberDisplays + display))[1]);
-                                                    tempDisplays.get(display).setText(WeatherInfo.get(timeKeys.get(page*numberDisplays + display))[2]);
+                                                    weatherDisplays.get(display).setText("Weather at " + String.valueOf((page*numberDisplays) + display) + " Hour");
+                                                    iconDisplays.get(display).setText(WeatherInfo.get(timeKeys.get((page*numberDisplays) + display))[1]);
+                                                    tempDisplays.get(display).setText(WeatherInfo.get(timeKeys.get((page*numberDisplays) + display))[2]);
                                                 } else {
                                                     weatherDisplays.get(display).setText("");
                                                     iconDisplays.get(display).setText("");
@@ -510,8 +513,8 @@ public class MainActivity extends AppCompatActivity {
 
                 } else if (timeAccumilator+stepTravelTime  - hour*3600 > 0) {
                     timeAccumilator += stepTravelTime;
-                    String lat = String.valueOf(step.getJSONObject("end_location").getLong("lat"));
-                    String lng = String.valueOf(step.getJSONObject("end_location").getLong("lng"));
+                    String lat = String.valueOf(step.getJSONObject("end_location").getDouble("lat"));
+                    String lng = String.valueOf(step.getJSONObject("end_location").getDouble("lng"));
                     String[] latlong = {lat, lng};
                     Double tmpTime = new Double(departureTime + 3600 * hour);
                     zipCodes.put(tmpTime, latlong);
@@ -524,8 +527,8 @@ public class MainActivity extends AppCompatActivity {
             }
             hour++;
             JSONObject step =  steps.getJSONObject( steps.length()-1 );
-            String lat = String.valueOf(step.getJSONObject("end_location").getLong("lat"));
-            String lng = String.valueOf(step.getJSONObject("end_location").getLong("lng"));
+            String lat = String.valueOf(step.getJSONObject("end_location").getDouble("lat"));
+            String lng = String.valueOf(step.getJSONObject("end_location").getDouble("lng"));
             String[] latlong = {lat, lng};
             Double tmpTime = new Double(departureTime + 3600 * hour);
             zipCodes.put(tmpTime, latlong);
