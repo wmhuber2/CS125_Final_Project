@@ -276,7 +276,7 @@ public class MainActivity extends AppCompatActivity {
             //String time = String.valueOf(1+((hour+hourCount)%24))+":00";
 
             if (display + 5 * page < completedSearches) {
-                weatherDisplays.get(display).setText("Weather " + String.valueOf((page*numberDisplays) + display) + " Hours After \n Departure");
+                weatherDisplays.get(display).setText("Weather " + String.valueOf((page*numberDisplays) + display) + " Hours\nAfter Departure");
                 iconDisplays.get(display).setText(WeatherInfo.get(timeKeys.get((page*numberDisplays) + display))[1]);
                 tempDisplays.get(display).setText(WeatherInfo.get(timeKeys.get((page*numberDisplays) + display))[2]);
             } else {
