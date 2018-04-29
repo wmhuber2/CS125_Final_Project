@@ -11,16 +11,21 @@ import com.android.volley.ParseError;
 import com.android.volley.Response;
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.Response.Listener;
-
+import android.content.Intent;
+import android.net.Uri;
 import java.io.UnsupportedEncodingException;
 
+import android.widget.Toast;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.TextView;
-import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.Button;
+
+import android.widget.ArrayAdapter;
 
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.RequestFuture;
@@ -41,27 +46,13 @@ import org.json.JSONObject;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-
-/*
-    To Do
-
-    Finish return for geo to country and zip
-
-    Finish Maping to zip MAP
-
-
- */
-
-
-
-
-
 public class MainActivity extends AppCompatActivity {
     private boolean disableWeatherDebug = false;
     /**
      * Because RequestQueue sucks and I need a way to return variables.
      */
     private static String tmpString = "";
+    int timeZoneOffset = -6;
 
     /**
      * Tag thing I have No Idea.
@@ -106,9 +97,15 @@ public class MainActivity extends AppCompatActivity {
     private int maxWaypoints = 24;
 
     private int numberDisplays = 5;
+
     private List<TextView> weatherDisplays = new ArrayList<>();
     private List<TextView> iconDisplays = new ArrayList<>();
     private List<TextView> tempDisplays = new ArrayList<>();
+
+    private EditText startAddressText;
+    private EditText endAddressText;
+    private EditText startZipText;
+    private EditText endZipText;
 
     /**
      * Run when this activity comes to the foreground.
@@ -121,11 +118,82 @@ public class MainActivity extends AppCompatActivity {
         requestQueue = Volley.newRequestQueue(this);
 
         setContentView(R.layout.activity_main);
+        initUIitems();
+
+        Spinner timeSelect = findViewById(R.id.spinner);
+
+        timeSelect.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String item = parent.getItemAtPosition(position).toString();
+                Log.d(TAG, String.valueOf(position));
+
+                departureTime = System.currentTimeMillis()/1000;
+                departureTime += 3600 - departureTime%3600;// Round Up to the nearest Hour.
+                departureTime -= 3600 * (position - 1);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                departureTime = System.currentTimeMillis()/1000;
+                departureTime += 3600 - departureTime%3600;// Round Up to the nearest Hour.
+
+            }
+        });
+
+        // Spinner Drop down elements
+        List<String> categories = new ArrayList<String>();
+        long time = System.currentTimeMillis()/1000;
+        time += 3600 - departureTime%3600;// Round Up to the nearest Hour.
+        long hour = ((time/3600)+timeZoneOffset) % 24;
+        categories.add("Departure Time");
+        for (int hourCount = 0; hourCount < 12; hourCount++) {
+            categories.add(String.valueOf(1+((hour+hourCount)%24))+":00 - "+String.valueOf(hourCount)+" Hours From Now ");
+        }
+
+        ArrayAdapter<String> dataAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, categories);
+        dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        timeSelect.setAdapter(dataAdapter);
 
 
+        //==========================================
+        for (int display = 0; display < numberDisplays; display++) {
+            weatherDisplays.get(display).setText("");
+            iconDisplays.get(display).setText("");
+            tempDisplays.get(display).setText("");
+        }
+
+        final Button MapBtn = findViewById(R.id.DispRoute);
+        MapBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(final View v) { DisplayMap(); } });
+
+        final Button nextPageBtn = findViewById(R.id.nextButton);
+        nextPageBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(final View v) { nextPage(); } });
+
+        final Button prevPageBtn = findViewById(R.id.prevButton);
+        prevPageBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(final View v) { prevPage(); } });
+
+        final Button openFile = findViewById(R.id.button);
+        openFile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(final View v) { MainAction(); } });
+    }
+
+    /**
+     * Run when this activity is no longer visible.
+     */
+    @Override
+    protected void onPause() {
+        super.onPause();
+    }
+
+    private void initUIitems() {
         // Load the main layout for our activity
-
-
         weatherDisplays.add( (TextView)findViewById(R.id.Weather0) );
         weatherDisplays.add( (TextView)findViewById(R.id.Weather1) );
         weatherDisplays.add( (TextView)findViewById(R.id.Weather2) );
@@ -144,120 +212,122 @@ public class MainActivity extends AppCompatActivity {
         tempDisplays.add( (TextView)findViewById(R.id.Temp3) );
         tempDisplays.add( (TextView)findViewById(R.id.Temp4) );
 
-        final EditText startAddressText = findViewById(R.id.StartAddress);
-        final EditText endAddressText = findViewById(R.id.EndAddress);
-        final EditText startZipText = findViewById(R.id.startZip);
-        final EditText endZipText = findViewById(R.id.endZip);
-
-        //==========================================
-
-
-        //menu.add(Menu.NONE, MENU_ITEM_ITEM1, Menu.NONE, "Item name");
-
-        final Button nextPageBtn = findViewById(R.id.nextButton);
-        nextPageBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(final View v) {
-                if (page < completedSearches / 5) {
-                    page++;
-                }
-                Log.d(TAG, WeatherInfo.toString());
-                List<Double> timeKeys = new ArrayList<Double>();
-                timeKeys.addAll(zipCodes.keySet());
-
-                Collections.sort(timeKeys);
-
-
-                for (int display = 0; display < numberDisplays; display++) {
-                    if (display + 5 * page < completedSearches) {
-                        weatherDisplays.get(display).setText("Weather at " + String.valueOf((page*numberDisplays) + display) + " Hour");
-                        iconDisplays.get(display).setText(WeatherInfo.get(timeKeys.get((page*numberDisplays) + display))[1]);
-                        tempDisplays.get(display).setText(WeatherInfo.get(timeKeys.get((page*numberDisplays) + display))[2]);
-                    } else {
-                        weatherDisplays.get(display).setText("");
-                        iconDisplays.get(display).setText("");
-                        tempDisplays.get(display).setText("");
-                    }
-                }
-            }
-        });
-        final Button prevPageBtn = findViewById(R.id.prevButton);
-        prevPageBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(final View v) {
-                if (page > 0) {
-                    page--;
-                }
-                Log.d(TAG, WeatherInfo.toString());
-                List<Double> timeKeys = new ArrayList<Double>();
-                timeKeys.addAll(zipCodes.keySet());
-
-                Collections.sort(timeKeys);
-
-
-                for (int display = 0; display < numberDisplays; display++) {
-                    if (display + 5 * page < completedSearches) {
-                        weatherDisplays.get(display).setText("Weather at " + String.valueOf((page*numberDisplays) + display) + " Hour");
-                        iconDisplays.get(display).setText(WeatherInfo.get(timeKeys.get((page*numberDisplays) + display))[1]);
-                        tempDisplays.get(display).setText(WeatherInfo.get(timeKeys.get((page*numberDisplays) + display))[2]);
-                    } else {
-                        weatherDisplays.get(display).setText("");
-                        iconDisplays.get(display).setText("");
-                        tempDisplays.get(display).setText("");
-                    }
-                }
-
-            }
-        });
-
-        final Button openFile = findViewById(R.id.button);
-        openFile.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(final View v) {
-                Log.d(TAG, "Refreshing Web Page Data");
-
-                String startAddr = startAddressText.getText().toString();
-                String startZip = startZipText.getText().toString();
-                String startCountry = "US";
-
-
-                String endAddr = endAddressText.getText().toString();
-                String endZip = endZipText.getText().toString();
-                String endCountry = "US";
-
-                if (startAddr.equals("Starting Address") && endAddr.equals("Destination Address")) {
-                    Log.d(TAG, "Using Shortcut Input Cuz, We Lazy Testers");
-
-                    startAddr    = "201 N Goodwin Ave";
-                    startZip     = "61801";
-
-                    //endAddr    = "233 S Wacker Dr";
-                    //endZip     = "60606";
-
-                    endAddr    = "8 Melia Way";
-                    endZip     = "11746";
-                }
-
-
-                page = 0;
-                departureTime = System.currentTimeMillis()/1000;
-                departureTime += 3600 - departureTime%3600;// Round Up to the nearest Hour.
-
-                WeatherInfo = new HashMap<Double, String[]>();
-                getZipCodes(startAddr, startZip, startCountry, endAddr, endZip, endCountry);
-                Log.d(TAG,String.valueOf(zipCodes.size()));
-            }
-        });
+        startAddressText = findViewById(R.id.StartAddress);
+        endAddressText = findViewById(R.id.EndAddress);
+        startZipText = findViewById(R.id.startZip);
+        endZipText = findViewById(R.id.endZip);
     }
-
     /**
-     * Run when this activity is no longer visible.
+     * Do the Weather and Routing Thing
      */
-    @Override
-    protected void onPause() {
-        super.onPause();
-    }
+    private void MainAction() {
+        Log.d(TAG, "Refreshing Web Page Data");
 
+        String startAddr = startAddressText.getText().toString();
+        String startZip = startZipText.getText().toString();
+        String startCountry = "US";
+
+
+        String endAddr = endAddressText.getText().toString();
+        String endZip = endZipText.getText().toString();
+        String endCountry = "US";
+
+        if (startAddr.equals("Starting Address") && endAddr.equals("Destination Address")) {
+            Log.d(TAG, "Using Shortcut Input Cuz, We Lazy Testers");
+
+            startAddr    = "201 N Goodwin Ave";
+            startZip     = "61801";
+
+            endAddr    = "233 S Wacker Dr";
+            endZip     = "60606";
+
+            //endAddr    = "8 Melia Way";
+            //endZip     = "11746";
+        }
+
+
+        page = 0;
+
+        WeatherInfo = new HashMap<Double, String[]>();
+        getZipCodes(startAddr, startZip, startCountry, endAddr, endZip, endCountry);
+        Log.d(TAG,String.valueOf(zipCodes.size()));
+    }
+    /**
+     *  Next Page.
+     */
+    private void nextPage() {
+
+        Log.d(TAG,"PAGE Changing From: "+String.valueOf(page));
+        if (page < completedSearches / 5) {
+            page++;
+        }
+        Log.d(TAG,"PAGE: "+String.valueOf(page));
+        updateDisplay();
+    }
+    private void updateDisplay() {
+        Log.d(TAG, WeatherInfo.toString());
+        List<Double> timeKeys = new ArrayList<Double>();
+        timeKeys.addAll(zipCodes.keySet());
+
+        Collections.sort(timeKeys);
+
+        for (int display = 0; display < numberDisplays; display++) {
+            //long edt = WeatherInfo.get(timeKeys.get((page*numberDisplays) + display))[3];
+            //String time = String.valueOf(1+((hour+hourCount)%24))+":00";
+
+            if (display + 5 * page < completedSearches) {
+                weatherDisplays.get(display).setText("Weather " + String.valueOf((page*numberDisplays) + display) + " Hours After \n Departure");
+                iconDisplays.get(display).setText(WeatherInfo.get(timeKeys.get((page*numberDisplays) + display))[1]);
+                tempDisplays.get(display).setText(WeatherInfo.get(timeKeys.get((page*numberDisplays) + display))[2]);
+            } else {
+                weatherDisplays.get(display).setText("");
+                iconDisplays.get(display).setText("");
+                tempDisplays.get(display).setText("");
+            }
+        }
+    }
+    /**
+     * Prev Page.
+     */
+    private void prevPage() {
+        Log.d(TAG,"PAGE Changing From: "+String.valueOf(page));
+        if (page > 0) {
+            page--;
+        }
+        Log.d(TAG,"PAGE: "+String.valueOf(page));
+        updateDisplay();
+    }
+    /**
+     * Display Map.
+     */
+    private void DisplayMap() {
+        Log.d(TAG,"Displaying Map");
+        String startAddr = startAddressText.getText().toString();
+        String startZip = startZipText.getText().toString();
+        String startCountry = "US";
+
+
+        String endAddr = endAddressText.getText().toString();
+        String endZip = endZipText.getText().toString();
+        String endCountry = "US";
+
+        if (startAddr.equals("Starting Address") && endAddr.equals("Destination Address")) {
+            Log.d(TAG, "Using Shortcut Input Cuz, We Lazy Testers");
+
+            startAddr = "201 N Goodwin Ave";
+            startZip = "61801";
+
+            endAddr = "233 S Wacker Dr";
+            endZip = "60606";
+        }
+        String url = "https://www.google.com/maps/dir/?api=1&origin="+startAddr+",+"+startZip+",+"+startCountry+
+                "+&destination="+endAddr+",+"+endZip+",+"+endCountry+
+                "&travelmode=driving";
+        Intent intent = new Intent(android.content.Intent.ACTION_VIEW, Uri.parse(url));
+        intent.setClassName("com.google.android.apps.maps", "com.google.android.maps.MapsActivity");
+        startActivity(intent);
+
+    }
     /**
      * Generate API LocationCode and forecast at the zip location and at the time.
      * @param latitude Latitude value N
@@ -327,28 +397,12 @@ public class MainActivity extends AppCompatActivity {
                                         String TempUnit = hourlyForecasts.getJSONObject(hourlyIndex).getJSONObject("Temperature").getString("Unit");
                                         String Temp = hourlyForecasts.getJSONObject(hourlyIndex).getJSONObject("Temperature").getString("Value");
                                         String Time = String.valueOf(EpochDateTime%3600)+":"+String.valueOf(EpochDateTime%60);
-                                        String[] packagedData = {IconID, Weather, Temp+" "+TempUnit};
+
+                                        String[] packagedData = {IconID, Weather, Temp+" "+TempUnit, Time};
                                         WeatherInfo.put(EpochDateTime, packagedData );
                                         completedSearches++;
-                                        if (completedSearches == zipCodes.size() - 1) {
-                                            Log.d(TAG, WeatherInfo.toString());
-                                            List<Double> timeKeys = new ArrayList<Double>();
-                                            timeKeys.addAll(zipCodes.keySet());
-
-                                            Collections.sort(timeKeys);
-
-
-                                            for (int display = 0; display < numberDisplays; display++) {
-                                                if (display + numberDisplays * page < completedSearches) {
-                                                    weatherDisplays.get(display).setText("Weather at " + String.valueOf((page*numberDisplays) + display) + " Hour");
-                                                    iconDisplays.get(display).setText(WeatherInfo.get(timeKeys.get((page*numberDisplays) + display))[1]);
-                                                    tempDisplays.get(display).setText(WeatherInfo.get(timeKeys.get((page*numberDisplays) + display))[2]);
-                                                } else {
-                                                    weatherDisplays.get(display).setText("");
-                                                    iconDisplays.get(display).setText("");
-                                                    tempDisplays.get(display).setText("");
-                                                }
-                                            }
+                                        if (completedSearches == zipCodes.size()) {
+                                           updateDisplay();
                                         }
 
                                     }
@@ -447,7 +501,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "Decoding ZipCodes");
         int routeValue = 0;
         try {
-
+            System.out.println(directions.toString(2));
             JSONObject route = directions.getJSONArray("routes").getJSONObject(routeValue).getJSONArray("legs").getJSONObject(0);
             JSONArray steps = route.getJSONArray("steps");
             zipCodes = new HashMap<Double, String[]>();
@@ -591,6 +645,7 @@ public class MainActivity extends AppCompatActivity {
                                      getAPILocationCode(lat, lng, locationKey.doubleValue());
 
                                  }
+                                 updateDisplay();
                              } else {
                                  Log.d(TAG, "Too many Waypoints. You F*** Up Done Gud.");
                              }

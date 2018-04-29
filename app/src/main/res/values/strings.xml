@@ -19,5 +19,47 @@
     <string name="Temp3">Temp3</string>
     <string name="Temp4">Temp4</string>
 
+    <string name="PM_1">1 PM</string>
+    <string name="PM_2">2 PM</string>
+    <string name="PM_3">3 PM</string>
+    <string name="PM_4">4 PM</string>
+    <string name="PM_5">5 PM</string>
+    <string name="PM_6">6 PM</string>
+    <string name="PM_7">7 PM</string>
+    <string name="PM_8">8 PM</string>
+    <string name="PM_9">9 PM</string>
+    <string name="PM_10">10 PM</string>
+    <string name="PM_11">11 PM</string>
+    <string name="PM_12">12 PM</string>
+
+    <string-array name="time_Array">
+
+        <item>Current Time</item>
+        <item>1 AM</item>
+        <item>2 AM</item>
+        <item>3 AM</item>
+        <item>4 AM</item>
+        <item>5 AM</item>
+        <item>6 AM</item>
+        <item>7 AM</item>
+        <item>8 AM</item>
+        <item>9 AM</item>
+        <item>10 AM</item>
+        <item>11 AM</item>
+        <item>12 AM</item>
+        <item>1 PM</item>
+        <item>2 PM</item>
+        <item>3 PM</item>
+        <item>4 PM</item>
+        <item>5 PM</item>
+        <item>6 PM</item>
+        <item>7 PM</item>
+        <item>8 PM</item>
+        <item>9 PM</item>
+        <item>10 PM</item>
+        <item>11 PM</item>
+        <item>12 PM</item>
+    </string-array>
+
 
 </resources>
